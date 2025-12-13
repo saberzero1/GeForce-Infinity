@@ -35,7 +35,9 @@
             export BUN_INSTALL_CACHE_DIR="$TMPDIR/bun-cache"
             mkdir -p "$BUN_INSTALL_CACHE_DIR"
             
-            # Install dependencies (skip postinstall to avoid electron-builder install-app-deps)
+            # Install dependencies
+            # --ignore-scripts skips postinstall (electron-builder install-app-deps)
+            # which is not needed since Nix handles native dependencies
             bun install --frozen-lockfile --ignore-scripts
             
             runHook postConfigure
@@ -53,7 +55,7 @@
             # Build electron
             bun run scripts/build-electron.ts
             
-            # Copy assets
+            # Copy assets (cpx is in node_modules, bun x runs it)
             bun x cpx "src/assets/**/*" dist/assets
             
             runHook postBuild
