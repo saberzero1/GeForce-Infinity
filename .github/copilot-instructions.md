@@ -138,12 +138,14 @@ Build steps:
 2. Setup Bun and Node.js v22
 3. Install system dependencies (Ubuntu 24.04)
 4. Install Wine for Windows cross-compilation
-5. `bun install`
+5. `bun install` (CI environment has better network/proxy setup, may work without `--ignore-scripts`)
 6. `bun run build`
 7. `bun run dist`
 8. Upload artifacts to GitHub releases (draft release)
 
-**Validation:** To test locally before pushing, run `bun run build && bun run dist` (requires Linux environment with system dependencies).
+**Note:** CI uses `bun install` without `--ignore-scripts` flag. If CI fails with electron-builder postinstall errors, update workflow to use `bun install --ignore-scripts`.
+
+**Validation:** To test locally before pushing, run `bun install --ignore-scripts && bun run build && bun run dist` (requires Linux environment with system dependencies).
 
 ### `.github/workflows/bump-version.yml`
 Manual version bump workflow using standard-version. Skips tag and changelog generation.
