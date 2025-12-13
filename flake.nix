@@ -20,6 +20,7 @@
           nativeBuildInputs = with pkgs; [
             bun
             nodejs_22
+            nodePackages.npm
             makeWrapper
           ];
 
@@ -30,16 +31,13 @@
           configurePhase = ''
             runHook preConfigure
             
-            # Set up bun cache directory
-            export BUN_INSTALL_CACHE_DIR="$TMPDIR/bun-cache"
-            mkdir -p "$BUN_INSTALL_CACHE_DIR"
-            
-            # Install dependencies
+            # Use npm for dependency installation (more stable in Nix sandbox)
             # --ignore-scripts skips postinstall (electron-builder install-app-deps)
             # which is not needed since Nix handles native dependencies
-            # --no-optional skips optional deps like register-scheme (git dependency that fails in sandbox)
-            # Note: bun.lockb is gitignored, so we generate it from package-lock.json during build
-            bun install --ignore-scripts --no-optional
+            # npm uses package-lock.json for reproducible builds
+            export npm_config_cache="$TMPDIR/npm-cache"
+            export HOME="$TMPDIR"
+            npm ci --ignore-scripts --loglevel verbose
             
             runHook postConfigure
           '';
