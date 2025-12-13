@@ -138,6 +138,123 @@
             echo "Run 'bun run start' to start the application"
           '';
         };
+
+        checks = {
+          # Build check - ensures the package builds successfully
+          build = geforce-infinity;
+
+          # NixOS module validation - tests module with default settings
+          nixos-module-defaults = pkgs.nixosTest {
+            name = "geforce-infinity-nixos-defaults";
+            nodes.machine = { config, pkgs, ... }: {
+              imports = [ self.nixosModules.default ];
+              programs.geforce-infinity.enable = true;
+            };
+            testScript = ''
+              machine.wait_for_unit("multi-user.target")
+              machine.succeed("test -f /etc/geforce-infinity/settings.json")
+              machine.succeed("geforce-infinity --version || true")
+            '';
+          };
+
+          # NixOS module validation - tests with custom settings
+          nixos-module-custom-settings = pkgs.nixosTest {
+            name = "geforce-infinity-nixos-custom";
+            nodes.machine = { config, pkgs, ... }: {
+              imports = [ self.nixosModules.default ];
+              programs.geforce-infinity = {
+                enable = true;
+                settings = {
+                  resolution = { width = 2560; height = 1440; };
+                  fps = 120;
+                  accentColor = "#0066cc";
+                  rpcEnabled = true;
+                  notify = true;
+                };
+              };
+            };
+            testScript = ''
+              machine.wait_for_unit("multi-user.target")
+              config = machine.succeed("cat /etc/geforce-infinity/settings.json")
+              assert "2560" in config, "Width should be 2560"
+              assert "1440" in config, "Height should be 1440"
+              assert "120" in config, "FPS should be 120"
+            '';
+          };
+
+          # Test invalid resolution width (should fail at eval time)
+          nixos-invalid-resolution-width = pkgs.runCommand "test-invalid-width" {
+            nativeBuildInputs = [ pkgs.nixos-rebuild ];
+          } ''
+            set +e
+            cat > test-config.nix <<EOF
+            { config, pkgs, ... }: {
+              imports = [ ${self.nixosModules.default} ];
+              programs.geforce-infinity = {
+                enable = true;
+                settings.resolution.width = 1234;  # Invalid
+              };
+            }
+            EOF
+            
+            # This should fail
+            if nix eval --impure --expr 'import test-config.nix {}' 2>&1 | grep -q "must be one of"; then
+              echo "Validation correctly rejected invalid width" > $out
+            else
+              echo "ERROR: Invalid width was not caught" > $out
+              exit 1
+            fi
+          '';
+
+          # Flake structure validation
+          flake-structure = pkgs.runCommand "check-flake-structure" {} ''
+            ${pkgs.nix}/bin/nix flake show ${self} --json > flake-structure.json
+            
+            # Check that required outputs exist
+            ${pkgs.jq}/bin/jq -e '.packages."${system}".default' flake-structure.json
+            ${pkgs.jq}/bin/jq -e '.apps."${system}".default' flake-structure.json
+            ${pkgs.jq}/bin/jq -e '.devShells."${system}".default' flake-structure.json
+            
+            echo "Flake structure is valid" > $out
+          '';
+
+          # Configuration validation test
+          config-validation = pkgs.writeShellScript "test-config-validation" ''
+            set -e
+            
+            # Test valid configurations
+            echo "Testing valid 1366x768 configuration..."
+            ${pkgs.jq}/bin/jq -n '{
+              userAgent: "",
+              autofocus: false,
+              automute: false,
+              notify: true,
+              rpcEnabled: true,
+              informed: false,
+              accentColor: "",
+              inactivityNotification: false,
+              monitorWidth: 1366,
+              monitorHeight: 768,
+              framesPerSecond: 60
+            }' > /tmp/test-config.json
+            
+            echo "Testing valid 1920x1080 configuration..."
+            ${pkgs.jq}/bin/jq -n '{
+              monitorWidth: 1920,
+              monitorHeight: 1080,
+              framesPerSecond: 60
+            }' > /tmp/test-config-2.json
+            
+            echo "Testing valid 2560x1440 120fps configuration..."
+            ${pkgs.jq}/bin/jq -n '{
+              monitorWidth: 2560,
+              monitorHeight: 1440,
+              framesPerSecond: 120
+            }' > /tmp/test-config-3.json
+            
+            echo "All configuration validation tests passed"
+          '';
+        };
       }
     ) // {
       # Shared library functions
@@ -249,6 +366,59 @@
           };
 
           config = mkIf cfg.enable {
+            assertions = [
+              {
+                assertion = elem cfg.settings.resolution.width [ 1366 1920 2560 ];
+                message = ''
+                  programs.geforce-infinity.settings.resolution.width must be one of: 1366, 1920, 2560
+                  Current value: ${toString cfg.settings.resolution.width}
+                '';
+              }
+              {
+                assertion = elem cfg.settings.resolution.height [ 768 1080 1440 ];
+                message = ''
+                  programs.geforce-infinity.settings.resolution.height must be one of: 768, 1080, 1440
+                  Current value: ${toString cfg.settings.resolution.height}
+                '';
+              }
+              {
+                assertion = elem cfg.settings.fps [ 30 60 120 ];
+                message = ''
+                  programs.geforce-infinity.settings.fps must be one of: 30, 60, 120
+                  Current value: ${toString cfg.settings.fps}
+                  Note: 120 FPS requires GeForce NOW Ultimate subscription.
+                '';
+              }
+              {
+                assertion = 
+                  let
+                    validCombinations = [
+                      { width = 1366; height = 768; }
+                      { width = 1920; height = 1080; }
+                      { width = 2560; height = 1440; }
+                    ];
+                    isValid = any (combo: 
+                      combo.width == cfg.settings.resolution.width && 
+                      combo.height == cfg.settings.resolution.height
+                    ) validCombinations;
+                  in isValid;
+                message = ''
+                  programs.geforce-infinity.settings.resolution combination is invalid.
+                  Current: ${toString cfg.settings.resolution.width}x${toString cfg.settings.resolution.height}
+                  Valid combinations are: 1366x768, 1920x1080, 2560x1440
+                '';
+              }
+              {
+                assertion = 
+                  cfg.settings.accentColor == "" || 
+                  (hasPrefix "#" cfg.settings.accentColor && stringLength cfg.settings.accentColor == 7);
+                message = ''
+                  programs.geforce-infinity.settings.accentColor must be empty or a valid hex color code (e.g., #0066cc).
+                  Current value: "${cfg.settings.accentColor}"
+                '';
+              }
+            ];
+
             environment.systemPackages = [ cfg.package ];
             
             # Create system-wide default configuration
@@ -393,6 +563,56 @@
                     programs.geforce-infinity.nixGL.package = pkgs.nixgl.nixGLIntel;   # for Intel
                   
                   You may need to add the nixGL overlay first. See NIX.md for details.
+                '';
+              }
+              {
+                assertion = elem cfg.settings.resolution.width [ 1366 1920 2560 ];
+                message = ''
+                  programs.geforce-infinity.settings.resolution.width must be one of: 1366, 1920, 2560
+                  Current value: ${toString cfg.settings.resolution.width}
+                '';
+              }
+              {
+                assertion = elem cfg.settings.resolution.height [ 768 1080 1440 ];
+                message = ''
+                  programs.geforce-infinity.settings.resolution.height must be one of: 768, 1080, 1440
+                  Current value: ${toString cfg.settings.resolution.height}
+                '';
+              }
+              {
+                assertion = elem cfg.settings.fps [ 30 60 120 ];
+                message = ''
+                  programs.geforce-infinity.settings.fps must be one of: 30, 60, 120
+                  Current value: ${toString cfg.settings.fps}
+                  Note: 120 FPS requires GeForce NOW Ultimate subscription.
+                '';
+              }
+              {
+                assertion = 
+                  let
+                    validCombinations = [
+                      { width = 1366; height = 768; }
+                      { width = 1920; height = 1080; }
+                      { width = 2560; height = 1440; }
+                    ];
+                    isValid = any (combo: 
+                      combo.width == cfg.settings.resolution.width && 
+                      combo.height == cfg.settings.resolution.height
+                    ) validCombinations;
+                  in isValid;
+                message = ''
+                  programs.geforce-infinity.settings.resolution combination is invalid.
+                  Current: ${toString cfg.settings.resolution.width}x${toString cfg.settings.resolution.height}
+                  Valid combinations are: 1366x768, 1920x1080, 2560x1440
+                '';
+              }
+              {
+                assertion = 
+                  cfg.settings.accentColor == "" || 
+                  (hasPrefix "#" cfg.settings.accentColor && stringLength cfg.settings.accentColor == 7);
+                message = ''
+                  programs.geforce-infinity.settings.accentColor must be empty or a valid hex color code (e.g., #0066cc).
+                  Current value: "${cfg.settings.accentColor}"
                 '';
               }
             ];

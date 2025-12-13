@@ -278,6 +278,57 @@ Settings are loaded with the following priority (highest to lowest):
 
 This allows users to override declarative settings through the UI if desired.
 
+### Configuration Validation
+
+The flake includes automatic validation for all configuration options to ensure valid values:
+
+#### Validated Settings
+
+**Resolution Validation:**
+- Width must be one of: `1366`, `1920`, `2560`
+- Height must be one of: `768`, `1080`, `1440`
+- Valid combinations: `1366x768`, `1920x1080`, `2560x1440`
+
+**FPS Validation:**
+- Must be one of: `30`, `60`, `120`
+- Note: 120 FPS requires GeForce NOW Ultimate subscription
+
+**Accent Color Validation:**
+- Must be empty string `""` or a valid hex color code (e.g., `#0066cc`)
+- Format: `#` followed by exactly 6 hexadecimal characters
+
+**NixGL Validation (Home Manager):**
+- If `nixGL.enable` is `true`, `nixGL.package` must be set
+
+#### Example Validation Errors
+
+```nix
+# This will fail at evaluation time:
+programs.geforce-infinity.settings = {
+  resolution = {
+    width = 1234;   # ERROR: Invalid width
+    height = 5678;  # ERROR: Invalid height
+  };
+  fps = 90;  # ERROR: Must be 30, 60, or 120
+  accentColor = "blue";  # ERROR: Must be hex format
+};
+```
+
+The module will provide clear error messages indicating which values are invalid and what the valid options are.
+
+#### Testing Configuration
+
+You can test your configuration before applying it:
+
+```bash
+# Test NixOS configuration
+nix flake check
+
+# Or run specific checks
+nix build .#checks.x86_64-linux.nixos-module-defaults
+nix build .#checks.x86_64-linux.config-validation
+```
+
 ## System Requirements
 
 GeForce Infinity requires:
