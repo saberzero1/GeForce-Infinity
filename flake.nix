@@ -42,6 +42,9 @@
           configurePhase = ''
             runHook preConfigure
             
+            # Skip Electron binary download - we use Electron from nixpkgs
+            export ELECTRON_SKIP_BINARY_DOWNLOAD=1
+            
             # npmConfigHook will set up node_modules from pre-fetched dependencies
             # This avoids network access during build
             
