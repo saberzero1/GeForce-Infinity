@@ -17,7 +17,7 @@
           hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Placeholder - will be updated
         };
         
-        geforce-infinity = pkgs.stdenv.mkDerivation rec {
+        geforce-infinity = pkgs.stdenv.mkDerivation {
           pname = "geforce-infinity";
           version = "1.1.3";
 
@@ -34,7 +34,8 @@
             electron
           ];
 
-          npmDeps = npmDeps;
+          # Pass pre-fetched npm dependencies to npmConfigHook
+          inherit npmDeps;
 
           configurePhase = ''
             runHook preConfigure
