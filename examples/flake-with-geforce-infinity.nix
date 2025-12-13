@@ -30,23 +30,47 @@
         
         # Your system configuration
         ({ config, pkgs, ... }: {
-          # Enable GeForce Infinity
-          programs.geforce-infinity.enable = true;
-          
-          # Optional: Use a specific version/package
-          # programs.geforce-infinity.package = geforce-infinity.packages.x86_64-linux.default;
+          # Enable GeForce Infinity with custom settings
+          programs.geforce-infinity = {
+            enable = true;
+            
+            # Optional: Use a specific version/package
+            # package = geforce-infinity.packages.x86_64-linux.default;
+            
+            # Configure default settings (optional)
+            settings = {
+              # Streaming quality
+              resolution = {
+                width = 2560;   # 1366, 1920, or 2560
+                height = 1440;  # 768, 1080, or 1440
+              };
+              fps = 120;  # 30, 60, or 120 (requires GFN Ultimate)
+              
+              # UI customization
+              accentColor = "#0066cc";  # Hex color or "" for default
+              userAgent = "";  # Custom user agent or "" for default
+              
+              # Feature toggles
+              rpcEnabled = true;  # Discord Rich Presence
+              notify = true;  # Gaming rig ready notification
+              autofocus = true;  # Auto-focus window when ready
+              automute = true;  # Auto-mute when unfocused
+              inactivityNotification = true;  # Inactivity warning
+            };
+          };
           
           # Required system configuration for GeForce Infinity
-          # (These are automatically enabled by the module, but shown here for reference)
-          # hardware.opengl.enable = true;
-          # hardware.pulseaudio.enable = true; # or services.pipewire
+          # (hardware.opengl is automatically enabled by the module)
           
-          # Example: If you prefer PipeWire over PulseAudio
+          # Audio: Choose PulseAudio or PipeWire
           services.pipewire = {
             enable = true;
             alsa.enable = true;
             pulse.enable = true;
           };
+          
+          # OR use PulseAudio instead:
+          # hardware.pulseaudio.enable = true;
           
           # Other system configuration...
           # boot.loader.systemd-boot.enable = true;
@@ -62,7 +86,36 @@
     #   modules = [
     #     geforce-infinity.homeManagerModules.default
     #     ({ config, pkgs, ... }: {
-    #       programs.geforce-infinity.enable = true;
+    #       # For non-NixOS systems, add nixGL overlay first
+    #       # nixpkgs.overlays = [
+    #       #   (self: super: {
+    #       #     nixgl = import (builtins.fetchTarball {
+    #       #       url = "https://github.com/nix-community/nixGL/archive/main.tar.gz";
+    #       #     }) { pkgs = super; };
+    #       #   })
+    #       # ];
+    #       
+    #       programs.geforce-infinity = {
+    #         enable = true;
+    #         
+    #         # Enable NixGL for non-NixOS systems (e.g., Ubuntu with Nix)
+    #         nixGL = {
+    #           enable = false;  # Set to true on non-NixOS systems
+    #           package = null;  # Set to pkgs.nixgl.nixGLNvidia or pkgs.nixgl.nixGLIntel
+    #         };
+    #         
+    #         # Same settings options as NixOS module
+    #         settings = {
+    #           resolution = { width = 2560; height = 1440; };
+    #           fps = 120;
+    #           accentColor = "#e412e1";
+    #           rpcEnabled = true;
+    #           notify = true;
+    #           autofocus = true;
+    #           automute = true;
+    #           inactivityNotification = true;
+    #         };
+    #       };
     #       
     #       # Other user configuration...
     #       home.username = "yourusername";

@@ -1,18 +1,35 @@
 import { app } from "electron";
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { Config, defaultConfig } from "../../shared/types";
 
 const configPath = path.join(app.getPath("userData"), "settings.json");
+
+// System-wide config paths (Nix-managed)
+const systemConfigPath = "/etc/geforce-infinity/settings.json";
+const userConfigPath = path.join(os.homedir(), ".config/geforce-infinity/settings.json");
 
 let currentConfig: Config = defaultConfig;
 
 export function loadConfig(): void {
     try {
+        let configSource: string | null = null;
+        
+        // Priority: user config > system config > app data > defaults
         if (fs.existsSync(configPath)) {
+            configSource = configPath;
+        } else if (fs.existsSync(userConfigPath)) {
+            configSource = userConfigPath;
+        } else if (fs.existsSync(systemConfigPath)) {
+            configSource = systemConfigPath;
+        }
+        
+        if (configSource) {
             currentConfig = JSON.parse(
-                fs.readFileSync(configPath, "utf-8")
+                fs.readFileSync(configSource, "utf-8")
             ) as Config;
+            console.log(`Loaded config from: ${configSource}`);
         } else {
             saveConfig();
         }
