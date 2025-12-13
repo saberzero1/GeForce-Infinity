@@ -37,7 +37,8 @@
             # Install dependencies
             # --ignore-scripts skips postinstall (electron-builder install-app-deps)
             # which is not needed since Nix handles native dependencies
-            bun install --frozen-lockfile --ignore-scripts
+            # Note: bun.lockb is gitignored, so we generate it from package-lock.json during build
+            bun install --ignore-scripts
             
             runHook postConfigure
           '';
