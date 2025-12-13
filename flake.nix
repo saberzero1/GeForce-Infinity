@@ -87,7 +87,7 @@
             # Install desktop file
             substitute ${./com.github.astralvixen.geforce-infinity.desktop} \
               $out/share/applications/net.astralvixen.geforceinfinity.desktop \
-              --replace '/opt/geforce-infinity/geforce-infinity' '$out/bin/geforce-infinity'
+              --replace '/opt/geforce-infinity/geforce-infinity' "$out/bin/geforce-infinity"
             
             runHook postInstall
           '';
