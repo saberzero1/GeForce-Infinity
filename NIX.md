@@ -37,6 +37,8 @@ nix profile install .
 
 ## NixOS Configuration
 
+> **Note**: Complete example configurations are available in the [examples/](examples/) directory.
+
 ### System-wide Installation
 
 Add to your NixOS configuration (`/etc/nixos/configuration.nix`):
