@@ -54,9 +54,23 @@ Visit our [Release](https://github.com/AstralVixen/GeForce-Infinity/releases) pa
 
 You can also download it from our [website](https://geforce-infinity.xyz/).
 
-We also provide installation via **Flatpak** (hosted at Flathub) and **AUR**.
+We also provide installation via **Flatpak** (hosted at Flathub), **AUR**, and **Nix Flakes**.
 
 [![Get it from the AUR](src/assets/resources/aur.png)](https://aur.archlinux.org/packages?O=0&K=geforce-infinity) [![Get it from FlatHub](src/assets/resources/flathub.png)](https://flathub.org/apps/io.github.astralvixen.geforce-infinity)
+
+### Nix / NixOS
+
+For NixOS and systems with Nix flakes enabled:
+
+```bash
+# Try without installing
+nix run github:saberzero1/GeForce-Infinity
+
+# Install to user profile
+nix profile install github:saberzero1/GeForce-Infinity
+```
+
+For NixOS system configuration or Home Manager integration, see the [Nix Installation Guide](NIX.md).
 
 ## 🎮 **Usage**
 
