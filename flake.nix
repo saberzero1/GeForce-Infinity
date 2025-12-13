@@ -15,6 +15,8 @@
         npmDeps = pkgs.fetchNpmDeps {
           src = ./.;
           hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Placeholder - will be updated
+          # Allow git dependencies (register-scheme is an optional git dependency)
+          forceGitDeps = true;
         };
         
         geforce-infinity = pkgs.stdenv.mkDerivation {

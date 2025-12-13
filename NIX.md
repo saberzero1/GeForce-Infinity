@@ -511,6 +511,7 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
    npmDeps = pkgs.fetchNpmDeps {
      src = ./.;
      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+     forceGitDeps = true;  # Required for optional git dependencies like register-scheme
    };
    ```
 
@@ -531,6 +532,7 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
    npmDeps = pkgs.fetchNpmDeps {
      src = ./.;
      hash = "sha256-CORRECT_HASH_HERE";
+     forceGitDeps = true;
    };
    ```
 
@@ -538,6 +540,8 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
    ```bash
    nix build .#geforce-infinity
    ```
+
+**Note**: The `forceGitDeps = true` flag is required because some dependencies (like `register-scheme`) are optional git dependencies with install scripts. Without this flag, `fetchNpmDeps` will fail with an error about git dependencies containing install scripts.
 
 ### Local Development
 
