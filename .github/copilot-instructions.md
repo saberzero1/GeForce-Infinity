@@ -156,7 +156,7 @@ Environment setup workflow for GitHub Copilot agents. Triggers on pull requests 
 Setup steps:
 1. Checkout repository
 2. Setup Bun v1.3.4
-3. Setup Node.js v20
+3. Setup Node.js v22
 4. Install dependencies with `bun install --ignore-scripts`
 5. Build application with `bun run build`
 6. Verify dist directory structure (assets/, electron/, overlay/, shared/)
