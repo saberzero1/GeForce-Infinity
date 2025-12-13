@@ -11,6 +11,12 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         
+        # Pre-fetch npm dependencies offline (required for Nix sandbox)
+        npmDeps = pkgs.fetchNpmDeps {
+          src = ./.;
+          hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Placeholder - will be updated
+        };
+        
         geforce-infinity = pkgs.stdenv.mkDerivation rec {
           pname = "geforce-infinity";
           version = "1.1.3";
@@ -20,7 +26,7 @@
           nativeBuildInputs = with pkgs; [
             bun
             nodejs_22
-            nodePackages.npm
+            npmHooks.npmConfigHook
             makeWrapper
           ];
 
@@ -28,16 +34,13 @@
             electron
           ];
 
+          npmDeps = npmDeps;
+
           configurePhase = ''
             runHook preConfigure
             
-            # Use npm for dependency installation (more stable in Nix sandbox)
-            # --ignore-scripts skips postinstall (electron-builder install-app-deps)
-            # which is not needed since Nix handles native dependencies
-            # npm uses package-lock.json for reproducible builds
-            export npm_config_cache="$TMPDIR/npm-cache"
-            export HOME="$TMPDIR"
-            npm ci --ignore-scripts --no-optional --loglevel verbose
+            # npmConfigHook will set up node_modules from pre-fetched dependencies
+            # This avoids network access during build
             
             runHook postConfigure
           '';

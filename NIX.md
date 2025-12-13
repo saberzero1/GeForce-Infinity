@@ -500,6 +500,67 @@ Then rebuild:
 home-manager switch --flake .#yourusername
 ```
 
+## Development
+
+### Updating npm Dependencies Hash
+
+When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` needs to be regenerated:
+
+1. Set the hash to an invalid value in `flake.nix`:
+   ```nix
+   npmDeps = pkgs.fetchNpmDeps {
+     src = ./.;
+     hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+   };
+   ```
+
+2. Try to build the package:
+   ```bash
+   nix build .#geforce-infinity
+   ```
+
+3. Nix will fail and show the correct hash in the error message:
+   ```
+   error: hash mismatch in fixed-output derivation '/nix/store/...':
+     specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+     got:       sha256-CORRECT_HASH_HERE
+   ```
+
+4. Update `flake.nix` with the correct hash:
+   ```nix
+   npmDeps = pkgs.fetchNpmDeps {
+     src = ./.;
+     hash = "sha256-CORRECT_HASH_HERE";
+   };
+   ```
+
+5. Build again to verify:
+   ```bash
+   nix build .#geforce-infinity
+   ```
+
+### Local Development
+
+To enter a development shell with all build dependencies:
+
+```bash
+nix develop
+```
+
+This provides:
+- Bun for running build scripts
+- Node.js 22
+- All development tools
+- Pre-configured environment
+
+Inside the development shell, you can run normal development commands:
+
+```bash
+bun install --ignore-scripts  # Install dependencies
+bun run build                 # Build the application
+bun run start                 # Start the application
+```
+
 ## Additional Resources
 
 - [Official Website](https://geforce-infinity.xyz/)
