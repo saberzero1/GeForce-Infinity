@@ -14,7 +14,7 @@
         # Pre-fetch npm dependencies offline (required for Nix sandbox)
         npmDeps = pkgs.fetchNpmDeps {
           src = ./.;
-          hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Placeholder - will be updated
+          hash = "sha256-qmoJR3lT27H4Kv2tl9ioKl1McX1DYA9uezjGCRC43fs=";
           # Allow git dependencies (register-scheme is an optional git dependency)
           forceGitDeps = true;
         };
