@@ -16,7 +16,7 @@ export function loadConfig(): void {
     try {
         let configSource: string | null = null;
         
-        // Priority: user config > system config > app data > defaults
+        // Priority: app data (user local) > XDG config (Home Manager) > system config (NixOS) > defaults
         if (fs.existsSync(configPath)) {
             configSource = configPath;
         } else if (fs.existsSync(userConfigPath)) {

@@ -140,27 +140,29 @@
         };
       }
     ) // {
+      # Shared function to generate config file from settings
+      lib.generateGeForceInfinityConfig = settings: pkgs: 
+        let settingsFormat = pkgs.formats.json {};
+        in settingsFormat.generate "geforce-infinity-settings.json" {
+          userAgent = settings.userAgent;
+          autofocus = settings.autofocus;
+          automute = settings.automute;
+          notify = settings.notify;
+          rpcEnabled = settings.rpcEnabled;
+          informed = settings.informed;
+          accentColor = settings.accentColor;
+          inactivityNotification = settings.inactivityNotification;
+          monitorWidth = settings.resolution.width;
+          monitorHeight = settings.resolution.height;
+          framesPerSecond = settings.fps;
+        };
+
       # NixOS module
       nixosModules.default = { config, lib, pkgs, ... }:
         with lib;
         let
           cfg = config.programs.geforce-infinity;
-          
-          settingsFormat = pkgs.formats.json {};
-          
-          configFile = settingsFormat.generate "geforce-infinity-settings.json" {
-            userAgent = cfg.settings.userAgent;
-            autofocus = cfg.settings.autofocus;
-            automute = cfg.settings.automute;
-            notify = cfg.settings.notify;
-            rpcEnabled = cfg.settings.rpcEnabled;
-            informed = cfg.settings.informed;
-            accentColor = cfg.settings.accentColor;
-            inactivityNotification = cfg.settings.inactivityNotification;
-            monitorWidth = cfg.settings.resolution.width;
-            monitorHeight = cfg.settings.resolution.height;
-            framesPerSecond = cfg.settings.fps;
-          };
+          configFile = self.lib.generateGeForceInfinityConfig cfg.settings pkgs;
         in
         {
           options.programs.geforce-infinity = {
@@ -261,38 +263,26 @@
         with lib;
         let
           cfg = config.programs.geforce-infinity;
-          
-          settingsFormat = pkgs.formats.json {};
-          
-          configFile = settingsFormat.generate "geforce-infinity-settings.json" {
-            userAgent = cfg.settings.userAgent;
-            autofocus = cfg.settings.autofocus;
-            automute = cfg.settings.automute;
-            notify = cfg.settings.notify;
-            rpcEnabled = cfg.settings.rpcEnabled;
-            informed = cfg.settings.informed;
-            accentColor = cfg.settings.accentColor;
-            inactivityNotification = cfg.settings.inactivityNotification;
-            monitorWidth = cfg.settings.resolution.width;
-            monitorHeight = cfg.settings.resolution.height;
-            framesPerSecond = cfg.settings.fps;
-          };
+          configFile = self.lib.generateGeForceInfinityConfig cfg.settings pkgs;
           
           # Wrapper for NixGL support on non-NixOS systems
-          wrappedPackage = if cfg.nixGL.enable && cfg.nixGL.package != null then
-            pkgs.writeShellScriptBin "geforce-infinity" ''
-              exec ${cfg.nixGL.package}/bin/nixGL ${cfg.package}/bin/geforce-infinity "$@"
-            ''
-          else if cfg.nixGL.enable then
-            # Fallback if nixGL.enable is true but no package is provided
-            pkgs.writeShellScriptBin "geforce-infinity" ''
-              echo "Warning: nixGL.enable is true but nixGL.package is not set."
-              echo "Please configure nixGL overlay or set nixGL.package explicitly."
-              echo "Running without NixGL wrapper..."
-              exec ${cfg.package}/bin/geforce-infinity "$@"
-            ''
-          else
-            cfg.package;
+          wrappedPackage = 
+            if cfg.nixGL.enable && cfg.nixGL.package == null then
+              throw ''
+                programs.geforce-infinity.nixGL.enable is true but nixGL.package is not set.
+                Please configure a nixGL package:
+                  programs.geforce-infinity.nixGL.package = pkgs.nixgl.nixGLNvidia;  # for NVIDIA
+                or
+                  programs.geforce-infinity.nixGL.package = pkgs.nixgl.nixGLIntel;   # for Intel
+                
+                You may need to add the nixGL overlay first. See NIX.md for details.
+              ''
+            else if cfg.nixGL.enable then
+              pkgs.writeShellScriptBin "geforce-infinity" ''
+                exec ${cfg.nixGL.package}/bin/nixGL ${cfg.package}/bin/geforce-infinity "$@"
+              ''
+            else
+              cfg.package;
         in
         {
           options.programs.geforce-infinity = {
