@@ -20,7 +20,6 @@
           nativeBuildInputs = with pkgs; [
             bun
             nodejs_22
-            copyfiles
             makeWrapper
           ];
 
