@@ -39,11 +39,14 @@
           # Pass pre-fetched npm dependencies to npmConfigHook
           inherit npmDeps;
 
+          preConfigure = ''
+            # Prevent npm from running any install scripts (including Electron's)
+            export npm_config_ignore_scripts=true
+            export ELECTRON_SKIP_BINARY_DOWNLOAD=1
+          '';
+
           configurePhase = ''
             runHook preConfigure
-            
-            # Skip Electron binary download - we use Electron from nixpkgs
-            export ELECTRON_SKIP_BINARY_DOWNLOAD=1
             
             # npmConfigHook will set up node_modules from pre-fetched dependencies
             # This avoids network access during build
