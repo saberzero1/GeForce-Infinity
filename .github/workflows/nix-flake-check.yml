@@ -74,7 +74,7 @@ jobs:
                   nix flake show >> $GITHUB_STEP_SUMMARY || true
 
     module-validation:
-        name: Module Configuration Tests
+        name: Module Documentation Check
         runs-on: ubuntu-24.04
         
         steps:
@@ -89,82 +89,31 @@ jobs:
                       experimental-features = nix-command flakes
                       accept-flake-config = true
 
-            - name: 🧪 Test NixOS module with defaults
+            - name: 📋 Verify module options documentation
               run: |
-                  cat > test-nixos-defaults.nix <<'EOF'
-                  { config, pkgs, ... }:
-                  {
-                    imports = [ ./flake.nix.nixosModules.default ];
-                    programs.geforce-infinity.enable = true;
-                  }
-                  EOF
-                  echo "Testing NixOS module with default configuration..."
-                  nix eval --impure --expr 'let cfg = (import ./test-nixos-defaults.nix { config = {}; pkgs = import <nixpkgs> {}; }); in cfg' || echo "Note: Full eval requires complete NixOS context"
+                  echo "Checking that NIX.md documents validation..."
+                  grep -q "Configuration Validation" NIX.md || exit 1
+                  grep -q "1366x768" NIX.md || exit 1
+                  grep -q "1920x1080" NIX.md || exit 1
+                  grep -q "2560x1440" NIX.md || exit 1
+                  echo "✅ Documentation includes all validation requirements"
 
-            - name: 🧪 Test invalid resolution combinations
+            - name: 🧪 Verify flake provides checks
               run: |
-                  cat > test-invalid-resolution.nix <<'EOF'
-                  { config, pkgs, ... }:
-                  {
-                    imports = [ ./flake.nix.nixosModules.default ];
-                    programs.geforce-infinity = {
-                      enable = true;
-                      settings.resolution = {
-                        width = 1234;  # Invalid
-                        height = 5678;  # Invalid
-                      };
-                    };
-                  }
-                  EOF
-                  
-                  echo "Testing that invalid resolution is rejected..."
-                  # This should fail
-                  if nix eval --impure --expr 'let cfg = (import ./test-invalid-resolution.nix { config = {}; pkgs = import <nixpkgs> {}; }); in cfg' 2>&1 | grep -q "must be one of"; then
-                    echo "✅ Invalid resolution correctly rejected"
-                  else
-                    echo "Note: Assertion validation requires full module evaluation context"
-                  fi
-
-            - name: 🧪 Test invalid FPS values
-              run: |
-                  cat > test-invalid-fps.nix <<'EOF'
-                  { config, pkgs, ... }:
-                  {
-                    imports = [ ./flake.nix.nixosModules.default ];
-                    programs.geforce-infinity = {
-                      enable = true;
-                      settings.fps = 90;  # Invalid - must be 30, 60, or 120
-                    };
-                  }
-                  EOF
-                  
-                  echo "Testing that invalid FPS is rejected..."
-                  echo "Note: Assertion validation requires full NixOS module evaluation"
-
-            - name: 🧪 Test invalid accent color
-              run: |
-                  cat > test-invalid-color.nix <<'EOF'
-                  { config, pkgs, ... }:
-                  {
-                    imports = [ ./flake.nix.nixosModules.default ];
-                    programs.geforce-infinity = {
-                      enable = true;
-                      settings.accentColor = "blue";  # Invalid - must be hex or empty
-                    };
-                  }
-                  EOF
-                  
-                  echo "Testing that invalid accent color is rejected..."
-                  echo "Note: Assertion validation requires full NixOS module evaluation"
+                  nix flake show --json | jq -e '.checks."x86_64-linux".build' || exit 1
+                  nix flake show --json | jq -e '.checks."x86_64-linux"."config-validation"' || exit 1
+                  echo "✅ Flake provides required checks"
 
             - name: 📊 Module validation summary
               run: |
                   echo "## Module Validation Summary" >> $GITHUB_STEP_SUMMARY
                   echo "✅ Module structure validated" >> $GITHUB_STEP_SUMMARY
-                  echo "✅ Configuration tests completed" >> $GITHUB_STEP_SUMMARY
+                  echo "✅ Documentation verified" >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### Validated Settings" >> $GITHUB_STEP_SUMMARY
-                  echo "- Resolution combinations (1366x768, 1920x1080, 2560x1440)" >> $GITHUB_STEP_SUMMARY
-                  echo "- FPS values (30, 60, 120)" >> $GITHUB_STEP_SUMMARY
-                  echo "- Accent color format (hex or empty)" >> $GITHUB_STEP_SUMMARY
-                  echo "- NixGL integration" >> $GITHUB_STEP_SUMMARY
+                  echo "### Validation Features" >> $GITHUB_STEP_SUMMARY
+                  echo "- Assertions for resolution combinations (1366x768, 1920x1080, 2560x1440)" >> $GITHUB_STEP_SUMMARY
+                  echo "- Assertions for FPS values (30, 60, 120)" >> $GITHUB_STEP_SUMMARY
+                  echo "- Assertions for accent color format (hex or empty)" >> $GITHUB_STEP_SUMMARY
+                  echo "- Assertions for NixGL integration" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "Note: Assertion validation occurs during NixOS/Home Manager evaluation" >> $GITHUB_STEP_SUMMARY

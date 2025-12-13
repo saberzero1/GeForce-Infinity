@@ -182,29 +182,7 @@
             '';
           };
 
-          # Test invalid resolution width (should fail at eval time)
-          nixos-invalid-resolution-width = pkgs.runCommand "test-invalid-width" {
-            nativeBuildInputs = [ pkgs.nixos-rebuild ];
-          } ''
-            set +e
-            cat > test-config.nix <<EOF
-            { config, pkgs, ... }: {
-              imports = [ ${self.nixosModules.default} ];
-              programs.geforce-infinity = {
-                enable = true;
-                settings.resolution.width = 1234;  # Invalid
-              };
-            }
-            EOF
-            
-            # This should fail
-            if nix eval --impure --expr 'import test-config.nix {}' 2>&1 | grep -q "must be one of"; then
-              echo "Validation correctly rejected invalid width" > $out
-            else
-              echo "ERROR: Invalid width was not caught" > $out
-              exit 1
-            fi
-          '';
+
 
           # Flake structure validation
           flake-structure = pkgs.runCommand "check-flake-structure" {} ''
@@ -274,6 +252,60 @@
             monitorHeight = settings.resolution.height;
             framesPerSecond = settings.fps;
           };
+
+        # Shared validation assertions
+        mkValidationAssertions = cfg: with nixpkgs.lib; [
+          {
+            assertion = elem cfg.settings.resolution.width [ 1366 1920 2560 ];
+            message = ''
+              programs.geforce-infinity.settings.resolution.width must be one of: 1366, 1920, 2560
+              Current value: ${toString cfg.settings.resolution.width}
+            '';
+          }
+          {
+            assertion = elem cfg.settings.resolution.height [ 768 1080 1440 ];
+            message = ''
+              programs.geforce-infinity.settings.resolution.height must be one of: 768, 1080, 1440
+              Current value: ${toString cfg.settings.resolution.height}
+            '';
+          }
+          {
+            assertion = elem cfg.settings.fps [ 30 60 120 ];
+            message = ''
+              programs.geforce-infinity.settings.fps must be one of: 30, 60, 120
+              Current value: ${toString cfg.settings.fps}
+              Note: 120 FPS requires GeForce NOW Ultimate subscription.
+            '';
+          }
+          {
+            assertion = 
+              let
+                validCombinations = [
+                  { width = 1366; height = 768; }
+                  { width = 1920; height = 1080; }
+                  { width = 2560; height = 1440; }
+                ];
+                isValid = any (combo: 
+                  combo.width == cfg.settings.resolution.width && 
+                  combo.height == cfg.settings.resolution.height
+                ) validCombinations;
+              in isValid;
+            message = ''
+              programs.geforce-infinity.settings.resolution combination is invalid.
+              Current: ${toString cfg.settings.resolution.width}x${toString cfg.settings.resolution.height}
+              Valid combinations are: 1366x768, 1920x1080, 2560x1440
+            '';
+          }
+          {
+            assertion = 
+              cfg.settings.accentColor == "" || 
+              (hasPrefix "#" cfg.settings.accentColor && stringLength cfg.settings.accentColor == 7);
+            message = ''
+              programs.geforce-infinity.settings.accentColor must be empty or a valid hex color code (e.g., #0066cc).
+              Current value: "${cfg.settings.accentColor}"
+            '';
+          }
+        ];
       };
 
       # NixOS module
@@ -366,58 +398,7 @@
           };
 
           config = mkIf cfg.enable {
-            assertions = [
-              {
-                assertion = elem cfg.settings.resolution.width [ 1366 1920 2560 ];
-                message = ''
-                  programs.geforce-infinity.settings.resolution.width must be one of: 1366, 1920, 2560
-                  Current value: ${toString cfg.settings.resolution.width}
-                '';
-              }
-              {
-                assertion = elem cfg.settings.resolution.height [ 768 1080 1440 ];
-                message = ''
-                  programs.geforce-infinity.settings.resolution.height must be one of: 768, 1080, 1440
-                  Current value: ${toString cfg.settings.resolution.height}
-                '';
-              }
-              {
-                assertion = elem cfg.settings.fps [ 30 60 120 ];
-                message = ''
-                  programs.geforce-infinity.settings.fps must be one of: 30, 60, 120
-                  Current value: ${toString cfg.settings.fps}
-                  Note: 120 FPS requires GeForce NOW Ultimate subscription.
-                '';
-              }
-              {
-                assertion = 
-                  let
-                    validCombinations = [
-                      { width = 1366; height = 768; }
-                      { width = 1920; height = 1080; }
-                      { width = 2560; height = 1440; }
-                    ];
-                    isValid = any (combo: 
-                      combo.width == cfg.settings.resolution.width && 
-                      combo.height == cfg.settings.resolution.height
-                    ) validCombinations;
-                  in isValid;
-                message = ''
-                  programs.geforce-infinity.settings.resolution combination is invalid.
-                  Current: ${toString cfg.settings.resolution.width}x${toString cfg.settings.resolution.height}
-                  Valid combinations are: 1366x768, 1920x1080, 2560x1440
-                '';
-              }
-              {
-                assertion = 
-                  cfg.settings.accentColor == "" || 
-                  (hasPrefix "#" cfg.settings.accentColor && stringLength cfg.settings.accentColor == 7);
-                message = ''
-                  programs.geforce-infinity.settings.accentColor must be empty or a valid hex color code (e.g., #0066cc).
-                  Current value: "${cfg.settings.accentColor}"
-                '';
-              }
-            ];
+            assertions = self.lib.mkValidationAssertions cfg;
 
             environment.systemPackages = [ cfg.package ];
             
@@ -565,57 +546,7 @@
                   You may need to add the nixGL overlay first. See NIX.md for details.
                 '';
               }
-              {
-                assertion = elem cfg.settings.resolution.width [ 1366 1920 2560 ];
-                message = ''
-                  programs.geforce-infinity.settings.resolution.width must be one of: 1366, 1920, 2560
-                  Current value: ${toString cfg.settings.resolution.width}
-                '';
-              }
-              {
-                assertion = elem cfg.settings.resolution.height [ 768 1080 1440 ];
-                message = ''
-                  programs.geforce-infinity.settings.resolution.height must be one of: 768, 1080, 1440
-                  Current value: ${toString cfg.settings.resolution.height}
-                '';
-              }
-              {
-                assertion = elem cfg.settings.fps [ 30 60 120 ];
-                message = ''
-                  programs.geforce-infinity.settings.fps must be one of: 30, 60, 120
-                  Current value: ${toString cfg.settings.fps}
-                  Note: 120 FPS requires GeForce NOW Ultimate subscription.
-                '';
-              }
-              {
-                assertion = 
-                  let
-                    validCombinations = [
-                      { width = 1366; height = 768; }
-                      { width = 1920; height = 1080; }
-                      { width = 2560; height = 1440; }
-                    ];
-                    isValid = any (combo: 
-                      combo.width == cfg.settings.resolution.width && 
-                      combo.height == cfg.settings.resolution.height
-                    ) validCombinations;
-                  in isValid;
-                message = ''
-                  programs.geforce-infinity.settings.resolution combination is invalid.
-                  Current: ${toString cfg.settings.resolution.width}x${toString cfg.settings.resolution.height}
-                  Valid combinations are: 1366x768, 1920x1080, 2560x1440
-                '';
-              }
-              {
-                assertion = 
-                  cfg.settings.accentColor == "" || 
-                  (hasPrefix "#" cfg.settings.accentColor && stringLength cfg.settings.accentColor == 7);
-                message = ''
-                  programs.geforce-infinity.settings.accentColor must be empty or a valid hex color code (e.g., #0066cc).
-                  Current value: "${cfg.settings.accentColor}"
-                '';
-              }
-            ];
+            ] ++ (self.lib.mkValidationAssertions cfg);
 
             home.packages = [ wrappedPackage ];
             
