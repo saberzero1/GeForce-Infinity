@@ -150,6 +150,19 @@ Build steps:
 ### `.github/workflows/bump-version.yml`
 Manual version bump workflow using standard-version. Skips tag and changelog generation.
 
+### `.github/workflows/copilot-setup.yml`
+Environment setup workflow for GitHub Copilot agents. Triggers on pull requests and manual dispatch.
+
+Setup steps:
+1. Checkout repository
+2. Setup Bun v1.3.4
+3. Setup Node.js v20
+4. Install dependencies with `bun install --ignore-scripts`
+5. Build application with `bun run build`
+6. Verify dist directory structure (assets/, electron/, overlay/, shared/)
+
+This workflow validates that the build environment is correctly configured according to the instructions in this file.
+
 ## Common Issues & Workarounds
 
 1. **`bun install` fails with electron-builder postinstall error**
