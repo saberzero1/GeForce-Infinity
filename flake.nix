@@ -37,7 +37,7 @@
             # npm uses package-lock.json for reproducible builds
             export npm_config_cache="$TMPDIR/npm-cache"
             export HOME="$TMPDIR"
-            npm ci --ignore-scripts --loglevel verbose
+            npm ci --ignore-scripts --no-optional --loglevel verbose
             
             runHook postConfigure
           '';
