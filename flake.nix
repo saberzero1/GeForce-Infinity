@@ -11,50 +11,33 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         
-        # Pre-fetch npm dependencies offline (required for Nix sandbox)
-        npmDeps = pkgs.fetchNpmDeps {
-          src = ./.;
-          hash = "sha256-qmoJR3lT27H4Kv2tl9ioKl1McX1DYA9uezjGCRC43fs=";
-          # Allow git dependencies (register-scheme is an optional git dependency)
-          forceGitDeps = true;
-        };
-        
-        geforce-infinity = pkgs.stdenv.mkDerivation {
+        geforce-infinity = pkgs.buildNpmPackage {
           pname = "geforce-infinity";
           version = "1.1.3";
 
           src = ./.;
 
+          npmDepsHash = "sha256-qmoJR3lT27H4Kv2tl9ioKl1McX1DYA9uezjGCRC43fs=";
+          
+          # Allow git dependencies (register-scheme is an optional git dependency)
+          npmFlags = [ "--legacy-peer-deps" ];
+          
           nativeBuildInputs = with pkgs; [
             bun
             nodejs_22
-            npmHooks.npmConfigHook
             makeWrapper
           ];
 
           buildInputs = with pkgs; [
             electron
           ];
-
-          # Pass pre-fetched npm dependencies to npmConfigHook
-          inherit npmDeps;
           
-          # Tell npmConfigHook to skip all install scripts
-          # This is the proper way to prevent Electron and other packages from running install scripts
-          npmInstallFlags = [ "--ignore-scripts" ];
+          # Prevent npm from running install scripts (including Electron's)
+          # buildNpmPackage handles this properly
+          makeCacheWritable = true;
           
-          # Additional environment variables as safeguards
-          preConfigure = ''
-            runHook preConfigure
-            
-            export ELECTRON_SKIP_BINARY_DOWNLOAD=1
-            export npm_config_ignore_scripts=true
-            
-            runHook postPreConfigure
-          '';
-
-          # Note: npmConfigHook will automatically run in configurePhase
-          # and set up node_modules from pre-fetched npmDeps with --ignore-scripts flag
+          # Skip postinstall scripts (electron-builder install-app-deps)
+          dontNpmBuild = false;
 
           buildPhase = ''
             runHook preBuild
