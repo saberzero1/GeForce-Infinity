@@ -17,12 +17,13 @@
 
           src = ./.;
 
-          # Use npmDepsHash - .npmrc in the repo skips optional dependencies
-          # This avoids the register-scheme git dependency issue
+          # Use npmDepsHash - the .npmrc file in the repo skips optional dependencies
+          # Pass --no-optional to fetchNpmDeps via npmInstallFlags
           npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
           
-          # Allow git dependencies (register-scheme is an optional git dependency)
-          npmFlags = [ "--legacy-peer-deps" ];
+          # Pass flags to npm during dependency installation
+          # --no-optional ensures register-scheme git dependency is skipped
+          npmInstallFlags = [ "--no-optional" "--legacy-peer-deps" ];
           
           nativeBuildInputs = with pkgs; [
             bun
