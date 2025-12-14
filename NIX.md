@@ -510,7 +510,11 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
    ```nix
    geforce-infinity = pkgs.buildNpmPackage {
      # ... other fields ...
-     npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+     npmDeps = pkgs.fetchNpmDeps {
+       src = ./.;
+       hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+       forceGitDeps = true;  # Required for register-scheme
+     };
    };
    ```
 
@@ -530,7 +534,11 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
    ```nix
    geforce-infinity = pkgs.buildNpmPackage {
      # ... other fields ...
-     npmDepsHash = "sha256-CORRECT_HASH_HERE";
+     npmDeps = pkgs.fetchNpmDeps {
+       src = ./.;
+       hash = "sha256-CORRECT_HASH_HERE";
+       forceGitDeps = true;  # Required for register-scheme
+     };
    };
    ```
 
@@ -538,6 +546,8 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
    ```bash
    nix build .#geforce-infinity
    ```
+
+**Note**: The `forceGitDeps = true` flag is required because the `register-scheme` package is an optional git dependency with install scripts. Without this flag, `fetchNpmDeps` will fail to process the dependency.
 
 **Note**: The package uses `buildNpmPackage` from nixpkgs, which is the standard way to package Electron apps in Nix. This function automatically:
 - Handles npm dependencies without network access
