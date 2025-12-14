@@ -239,6 +239,9 @@ Home Manager supports all the same `settings.*` options as NixOS (resolution, fp
 #   (self: super: {
 #     nixgl = import (builtins.fetchTarball {
 #       url = "https://github.com/nix-community/nixGL/archive/7d6bc1b21316bab6cf4a6520c2639a11c8eb2b8a.tar.gz";
+#       # NOTE: Replace the sha256 below with the actual hash for the tarball.
+#       # To obtain the correct hash, use an obviously-wrong value (like all zeros) and run Nix;
+#       # Nix will fail and print the correct hash in the error message.
 #       sha256 = "0000000000000000000000000000000000000000000000000000";
 #     }) { pkgs = super; };
 #   })

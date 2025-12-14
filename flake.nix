@@ -58,15 +58,10 @@
           # buildNpmPackage handles this properly
           makeCacheWritable = true;
 
-          # Skip postinstall scripts (electron-builder install-app-deps)
-          dontNpmBuild = false;
-
-          env = {
-            ELECTRON_MIRROR = "file://${pkgs.electron}/lib/electron";
-            ELECTRON_CUSTOM_DIR = ""; # Ensure this is unset or points to a non-download path
-            ELECTRON_SKIP_BINARY_DOWNLOAD = "1"; # Crucial flag for some Electron versions
-            ELECTRON_BUILDER_SKIP_FORGE = "1"; # If electron-forge is involved
-          };
+          # Environment variables to prevent Electron binary downloads
+          ELECTRON_MIRROR = "file://${pkgs.electron}/lib/electron";
+          ELECTRON_SKIP_BINARY_DOWNLOAD = "1"; # Crucial flag for some Electron versions
+          ELECTRON_BUILDER_SKIP_FORGE = "1"; # If electron-forge is involved
 
           buildPhase = ''
             runHook preBuild
@@ -323,30 +318,6 @@
         # Shared validation assertions
         mkValidationAssertions =
           cfg: with nixpkgs.lib; [
-            # Individual width/height checks provide specific error messages to help users
-            # identify which value is invalid, while the combination check ensures valid pairings
-            {
-              assertion = elem cfg.settings.resolution.width [
-                1366
-                1920
-                2560
-              ];
-              message = ''
-                programs.geforce-infinity.settings.resolution.width must be one of: 1366, 1920, 2560
-                Current value: ${toString cfg.settings.resolution.width}
-              '';
-            }
-            {
-              assertion = elem cfg.settings.resolution.height [
-                768
-                1080
-                1440
-              ];
-              message = ''
-                programs.geforce-infinity.settings.resolution.height must be one of: 768, 1080, 1440
-                Current value: ${toString cfg.settings.resolution.height}
-              '';
-            }
             {
               assertion = elem cfg.settings.fps [
                 30
@@ -555,7 +526,7 @@
 
               package = mkOption {
                 type = types.nullOr types.package;
-                default = pkgs.nixgl.auto.nixGLDefault;
+                default = null;
                 defaultText = literalExpression "null";
                 description = ''
                   The NixGL package to use. Required when nixGL.enable is true.

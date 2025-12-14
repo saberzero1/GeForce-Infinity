@@ -43,17 +43,16 @@ jobs:
                   trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
                   EOF
 
-            - name: ✅ Run flake check
-              run: nix flake check --show-trace --print-build-logs --no-build
-
             - name: 🔍 Validate flake metadata
               run: nix flake metadata --json | jq
 
             - name: 📋 Show flake outputs
               run: nix flake show
 
-            - name: 🧪 Test package build
-              run: nix build .#geforce-infinity --print-build-logs
+            - name: 🧪 Test package build and run checks
+              run: |
+                  nix build .#geforce-infinity --print-build-logs
+                  nix flake check --show-trace --print-build-logs
 
             - name: 🎯 Run specific checks
               run: |
