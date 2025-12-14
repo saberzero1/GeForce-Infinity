@@ -43,20 +43,15 @@
             runHook preConfigure
             
             # Prevent npm from running any install scripts (including Electron's)
+            # These need to be set BEFORE npmConfigHook runs in configurePhase
             export npm_config_ignore_scripts=true
             export ELECTRON_SKIP_BINARY_DOWNLOAD=1
             
-            runHook postPreConfigure
-          '';
-
-          configurePhase = ''
-            runHook preConfigure
-            
-            # npmConfigHook will set up node_modules from pre-fetched dependencies
-            # This avoids network access during build
-            
             runHook postConfigure
           '';
+
+          # Note: npmConfigHook will automatically run in configurePhase
+          # and set up node_modules from pre-fetched npmDeps
 
           buildPhase = ''
             runHook preBuild
