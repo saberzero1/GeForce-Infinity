@@ -508,10 +508,9 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
 
 1. Set the hash to an invalid value in `flake.nix`:
    ```nix
-   npmDeps = pkgs.fetchNpmDeps {
-     src = ./.;
-     hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-     forceGitDeps = true;  # Required for optional git dependencies like register-scheme
+   geforce-infinity = pkgs.buildNpmPackage {
+     # ... other fields ...
+     npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
    };
    ```
 
@@ -529,10 +528,9 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
 
 4. Update `flake.nix` with the correct hash:
    ```nix
-   npmDeps = pkgs.fetchNpmDeps {
-     src = ./.;
-     hash = "sha256-CORRECT_HASH_HERE";
-     forceGitDeps = true;
+   geforce-infinity = pkgs.buildNpmPackage {
+     # ... other fields ...
+     npmDepsHash = "sha256-CORRECT_HASH_HERE";
    };
    ```
 
@@ -541,9 +539,13 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
    nix build .#geforce-infinity
    ```
 
-**Note**: The `forceGitDeps = true` flag is required because some dependencies (like `register-scheme`) are optional git dependencies with install scripts. Without this flag, `fetchNpmDeps` will fail with an error about git dependencies containing install scripts.
+**Note**: The package uses `buildNpmPackage` from nixpkgs, which is the standard way to package Electron apps in Nix. This function automatically:
+- Handles npm dependencies without network access
+- Skips install scripts (including Electron's binary download)
+- Provides proper isolation and reproducibility
+- Works correctly with optional git dependencies
 
-**Important**: The build uses `npmInstallFlags = [ "--ignore-scripts" ]` to prevent npm from running any install scripts (including Electron's binary download script). This is combined with `ELECTRON_SKIP_BINARY_DOWNLOAD=1` environment variable as an additional safeguard. All dependencies including Electron are provided by nixpkgs, so these post-install scripts are unnecessary and would fail in the Nix sandbox anyway due to network isolation.
+All dependencies including Electron are provided by nixpkgs, so npm install scripts are unnecessary and would fail in the Nix sandbox anyway due to network isolation.
 
 ### Local Development
 
