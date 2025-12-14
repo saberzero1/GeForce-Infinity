@@ -45,6 +45,7 @@
           
           # Skip postinstall scripts (electron-builder install-app-deps)
           dontNpmBuild = false;
+          dontRun = "npm install --ignore-scripts";
 
           buildPhase = ''
             runHook preBuild
