@@ -40,9 +40,13 @@
           inherit npmDeps;
 
           preConfigure = ''
+            runHook preConfigure
+            
             # Prevent npm from running any install scripts (including Electron's)
             export npm_config_ignore_scripts=true
             export ELECTRON_SKIP_BINARY_DOWNLOAD=1
+            
+            runHook postPreConfigure
           '';
 
           configurePhase = ''
