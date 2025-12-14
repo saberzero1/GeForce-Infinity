@@ -48,6 +48,11 @@
           dontRun = "npm install --ignore-scripts";
 
           buildPhase = ''
+            export ELECTRON_MIRROR="file://${pkgs.electron}/lib/electron"
+            export ELECTRON_CUSTOM_DIR="" # Ensure this is unset or points to a non-download path
+            export ELECTRON_SKIP_BINARY_DOWNLOAD=1 # <--- Crucial flag for some Electron versions
+            export ELECTRON_BUILDER_SKIP_FORGE=1 # If electron-forge is involved
+
             runHook preBuild
             
             # Build CSS
