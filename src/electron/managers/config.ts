@@ -17,12 +17,12 @@ export function loadConfig(): void {
         // Priority: app data (user local) > XDG config (Home Manager) > system config (NixOS) > defaults
         const configPaths = [configPath, userConfigPath, systemConfigPath];
         
-        for (const path of configPaths) {
-            if (fs.existsSync(path)) {
+        for (const configPathToCheck of configPaths) {
+            if (fs.existsSync(configPathToCheck)) {
                 currentConfig = JSON.parse(
-                    fs.readFileSync(path, "utf-8")
+                    fs.readFileSync(configPathToCheck, "utf-8")
                 ) as Config;
-                console.log(`Loaded config from: ${path}`);
+                console.log(`Loaded config from: ${configPathToCheck}`);
                 return;
             }
         }

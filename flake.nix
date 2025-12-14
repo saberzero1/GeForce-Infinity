@@ -47,7 +47,6 @@
             nodejs_22
             makeWrapper
             esbuild
-            python313Packages.distutils
           ];
 
           buildInputs = with pkgs; [
@@ -57,11 +56,6 @@
           # Prevent npm from running install scripts (including Electron's)
           # buildNpmPackage handles this properly
           makeCacheWritable = true;
-
-          # Environment variables to prevent Electron binary downloads
-          ELECTRON_MIRROR = "file://${pkgs.electron}/lib/electron";
-          ELECTRON_SKIP_BINARY_DOWNLOAD = "1"; # Crucial flag for some Electron versions
-          ELECTRON_BUILDER_SKIP_FORGE = "1"; # If electron-forge is involved
 
           buildPhase = ''
             runHook preBuild
