@@ -38,20 +38,23 @@
 
           # Pass pre-fetched npm dependencies to npmConfigHook
           inherit npmDeps;
-
+          
+          # Tell npmConfigHook to skip all install scripts
+          # This is the proper way to prevent Electron and other packages from running install scripts
+          npmInstallFlags = [ "--ignore-scripts" ];
+          
+          # Additional environment variables as safeguards
           preConfigure = ''
             runHook preConfigure
             
-            # Prevent npm from running any install scripts (including Electron's)
-            # These need to be set BEFORE npmConfigHook runs in configurePhase
-            export npm_config_ignore_scripts=true
             export ELECTRON_SKIP_BINARY_DOWNLOAD=1
+            export npm_config_ignore_scripts=true
             
             runHook postPreConfigure
           '';
 
           # Note: npmConfigHook will automatically run in configurePhase
-          # and set up node_modules from pre-fetched npmDeps
+          # and set up node_modules from pre-fetched npmDeps with --ignore-scripts flag
 
           buildPhase = ''
             runHook preBuild

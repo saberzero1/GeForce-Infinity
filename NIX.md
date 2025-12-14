@@ -543,7 +543,7 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
 
 **Note**: The `forceGitDeps = true` flag is required because some dependencies (like `register-scheme`) are optional git dependencies with install scripts. Without this flag, `fetchNpmDeps` will fail with an error about git dependencies containing install scripts.
 
-**Important**: The build disables npm install scripts (`npm_config_ignore_scripts=true`) and sets `ELECTRON_SKIP_BINARY_DOWNLOAD=1` to prevent Electron and other packages from attempting network access during post-install. All dependencies including Electron are provided by nixpkgs, so these scripts are unnecessary and would fail in the Nix sandbox anyway.
+**Important**: The build uses `npmInstallFlags = [ "--ignore-scripts" ]` to prevent npm from running any install scripts (including Electron's binary download script). This is combined with `ELECTRON_SKIP_BINARY_DOWNLOAD=1` environment variable as an additional safeguard. All dependencies including Electron are provided by nixpkgs, so these post-install scripts are unnecessary and would fail in the Nix sandbox anyway due to network isolation.
 
 ### Local Development
 
