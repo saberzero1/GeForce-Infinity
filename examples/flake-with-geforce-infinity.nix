@@ -60,7 +60,7 @@
           };
           
           # Required system configuration for GeForce Infinity
-          # (hardware.opengl is automatically enabled by the module)
+          # (hardware.graphics/hardware.opengl is automatically enabled by the module)
           
           # Audio: Choose PulseAudio or PipeWire
           services.pipewire = {
@@ -87,10 +87,12 @@
     #     geforce-infinity.homeManagerModules.default
     #     ({ config, pkgs, ... }: {
     #       # For non-NixOS systems, add nixGL overlay first
+    #       # IMPORTANT: Pin to a specific commit for production use, not 'main'
     #       # nixpkgs.overlays = [
     #       #   (self: super: {
     #       #     nixgl = import (builtins.fetchTarball {
-    #       #       url = "https://github.com/nix-community/nixGL/archive/main.tar.gz";
+    #       #       url = "https://github.com/nix-community/nixGL/archive/7d6bc1b21316bab6cf4a6520c2639a11c8eb2b8a.tar.gz";
+    #       #       sha256 = "0000000000000000000000000000000000000000000000000000";
     #       #     }) { pkgs = super; };
     #       #   })
     #       # ];

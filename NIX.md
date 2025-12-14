@@ -233,6 +233,18 @@ Home Manager supports all the same `settings.*` options as NixOS (resolution, fp
 
 ```nix
 # First, add nixGL overlay to your configuration
+# NOTE: For production use, pin to a specific commit instead of using 'main'
+# Example with pinned revision:
+# nixpkgs.overlays = [
+#   (self: super: {
+#     nixgl = import (builtins.fetchTarball {
+#       url = "https://github.com/nix-community/nixGL/archive/7d6bc1b21316bab6cf4a6520c2639a11c8eb2b8a.tar.gz";
+#       sha256 = "0000000000000000000000000000000000000000000000000000";
+#     }) { pkgs = super; };
+#   })
+# ];
+#
+# For development/testing only (unpinned, not recommended for production):
 nixpkgs.overlays = [
   (self: super: {
     nixgl = import (builtins.fetchTarball {
@@ -333,7 +345,7 @@ nix build .#checks.x86_64-linux.config-validation
 
 GeForce Infinity requires:
 
-- **Graphics**: OpenGL/Vulkan support (enabled via `hardware.opengl.enable` in NixOS)
+- **Graphics**: OpenGL/Vulkan support (enabled via `hardware.graphics.enable` in NixOS 24.05+, or `hardware.opengl.enable` on older releases)
 - **Audio**: PulseAudio or PipeWire
 - **Display**: X11 or Wayland
 - **Network**: Internet connection for GeForce NOW streaming
@@ -392,7 +404,7 @@ Discord Rich Presence requires Discord to be running and accessible. Ensure:
 If the application doesn't start or has display issues:
 
 1. Ensure you're running on X11 or Wayland
-2. Check that `hardware.opengl.enable = true` in your NixOS configuration
+2. For NixOS 24.05+, ensure `hardware.graphics.enable = true` in your configuration (on older versions use `hardware.opengl.enable = true`)
 3. Try running with `ELECTRON_ENABLE_LOGGING=1` for debug output:
 
 ```bash
@@ -543,7 +555,7 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
 
 **Note**: The package uses `buildNpmPackage` from nixpkgs, which is the standard way to package Electron apps in Nix. This function automatically:
 - Handles npm dependencies without network access using `fetchNpmDeps`
-- Skips install scripts (including Electron's binary download) via the `dontRun` attribute
+- Skips install scripts (including Electron's binary download) through its dependency fetching mechanism
 - Provides proper isolation and reproducibility
 - Uses `forceGitDeps` to handle optional git dependencies
 
