@@ -539,15 +539,15 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
    nix build .#geforce-infinity
    ```
 
-**Note**: The `.npmrc` file in the repository root contains `optional=false` to skip optional dependencies during `npm install`. This prevents the `register-scheme` git dependency (an optional dependency of electron-builder) from being fetched, which would fail in the Nix sandbox. This is a cleaner solution than using `forceGitDeps` in the flake, as it handles the issue at the package level.
+**Note**: The flake uses `forceGitDeps = true` in `buildNpmPackage` to handle the optional `register-scheme` git dependency (part of electron-builder's http-proxy-agent). This flag tells the npm dependency fetcher to process git dependencies even though they have install scripts without lockfiles.
 
 **Note**: The package uses `buildNpmPackage` from nixpkgs, which is the standard way to package Electron apps in Nix. This function automatically:
-- Handles npm dependencies without network access
-- Skips install scripts (including Electron's binary download)
+- Handles npm dependencies without network access using `fetchNpmDeps`
+- Skips install scripts (including Electron's binary download) via the `dontRun` attribute
 - Provides proper isolation and reproducibility
-- Respects .npmrc configuration
+- Uses `forceGitDeps` to handle optional git dependencies
 
-All dependencies including Electron are provided by nixpkgs, so npm install scripts are unnecessary and would fail in the Nix sandbox anyway due to network isolation.
+All dependencies including Electron are provided by nixpkgs, so npm install scripts are unnecessary and would fail in the Nix sandbox anyway due to network isolation. The `forceGitDeps` flag is necessary because the register-scheme package is an optional git dependency with install scripts but no lockfile of its own.
 
 ### Local Development
 
