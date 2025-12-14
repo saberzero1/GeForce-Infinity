@@ -20,8 +20,9 @@
           # Override npmDeps to use fetchNpmDeps with forceGitDeps
           # This is required for register-scheme which is an optional git dependency with install scripts
           npmDeps = pkgs.fetchNpmDeps {
+            name = "geforce-infinity-npm-deps";
             src = ./.;
-            hash = "sha256-qmoJR3lT27H4Kv2tl9ioKl1McX1DYA9uezjGCRC43fs=";
+            hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
             forceGitDeps = true;
           };
           
