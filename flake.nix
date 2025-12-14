@@ -47,7 +47,7 @@
             export npm_config_ignore_scripts=true
             export ELECTRON_SKIP_BINARY_DOWNLOAD=1
             
-            runHook postConfigure
+            runHook postPreConfigure
           '';
 
           # Note: npmConfigHook will automatically run in configurePhase
