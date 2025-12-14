@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    nixgl = {
+      url = "github:nix-community/nixGL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -11,11 +15,17 @@
       self,
       nixpkgs,
       flake-utils,
+      nixgl,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
+        # Add nixGL overlay to pkgs
+        pkgs = nixpkgs.legacyPackages.${system}.extend (
+          final: prev: {
+            nixgl = nixgl.packages.${system};
+          }
+        );
 
         geforce-infinity = pkgs.buildNpmPackage {
           pname = "geforce-infinity";
@@ -380,8 +390,7 @@
             }
             {
               assertion =
-                cfg.settings.accentColor == ""
-                || (match "^#[0-9a-fA-F]{6}$" cfg.settings.accentColor != null);
+                cfg.settings.accentColor == "" || (match "^#[0-9a-fA-F]{6}$" cfg.settings.accentColor != null);
               message = ''
                 programs.geforce-infinity.settings.accentColor must be empty or a valid hex color code (e.g., #0066cc).
                 Current value: "${cfg.settings.accentColor}"
@@ -494,8 +503,8 @@
             environment.etc."geforce-infinity/settings.json".source = configFile;
 
             # Enable required system services
-            hardware.graphics.enable = true;  # NixOS 24.05+
-            hardware.opengl.enable = true;    # Backwards compatibility with older NixOS
+            hardware.graphics.enable = true; # NixOS 24.05+
+            hardware.opengl.enable = true; # Backwards compatibility with older NixOS
             hardware.pulseaudio.enable = mkDefault true;
           };
         };
@@ -546,7 +555,7 @@
 
               package = mkOption {
                 type = types.nullOr types.package;
-                default = null;
+                default = pkgs.nixgl.auto.nixGLDefault;
                 defaultText = literalExpression "null";
                 description = ''
                   The NixGL package to use. Required when nixGL.enable is true.
