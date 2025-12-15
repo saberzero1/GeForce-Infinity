@@ -107,3 +107,8 @@ builds
 bun.lockb
 .flatpak-builder
 build
+
+# Nix
+result
+result-*
+.direnv
