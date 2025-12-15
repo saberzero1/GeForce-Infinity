@@ -51,7 +51,7 @@ jobs:
             - name: 🔍 Validate Nix Flake
               run: |
                   echo "Validating Nix flake structure..."
-                  nix flake check --no-build || echo "⚠️  Flake check skipped (Nix environment may not be fully configured)"
+                  nix flake check
                   nix flake metadata || echo "⚠️  Flake metadata not available"
 
             - name: 📊 Build summary
