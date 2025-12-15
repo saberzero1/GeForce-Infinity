@@ -247,11 +247,13 @@ Home Manager supports all the same `settings.*` options as NixOS (resolution, fp
 #   })
 # ];
 #
-# For development/testing only (unpinned, not recommended for production):
+# SECURITY WARNING: For development/testing only - uses unpinned nixGL (supply-chain risk)
+# For production, use the pinned version shown above with a specific commit hash.
 nixpkgs.overlays = [
   (self: super: {
     nixgl = import (builtins.fetchTarball {
-      url = "https://github.com/nix-community/nixGL/archive/main.tar.gz";
+      url = "https://github.com/nix-community/nixGL/archive/310f8e49a149e4d6684b6b4e63475caa04eeea58.tar.gz";
+      sha256 = "0000000000000000000000000000000000000000000000000000"; # Run nix-build to get correct hash
     }) { pkgs = super; };
   })
 ];
@@ -442,14 +444,18 @@ If you're using Home Manager on a non-NixOS system and experience OpenGL/renderi
 
 4. **Add nixGL overlay** to your Home Manager configuration if not already present:
    ```nix
+   # Use a pinned version for security (recommended)
    nixpkgs.overlays = [
      (self: super: {
        nixgl = import (builtins.fetchTarball {
-         url = "https://github.com/nix-community/nixGL/archive/main.tar.gz";
+         url = "https://github.com/nix-community/nixGL/archive/310f8e49a149e4d6684b6b4e63475caa04eeea58.tar.gz";
+         sha256 = "0000000000000000000000000000000000000000000000000000"; # Run nix-build to get correct hash
        }) { pkgs = super; };
      })
    ];
    ```
+   
+   **Note**: Replace the placeholder `sha256` with the actual hash. To obtain it, use the above configuration and run your build - Nix will fail and print the correct hash in the error message.
 
 **Note**: NixGL is only necessary on non-NixOS systems where the graphics drivers are managed by the host system rather than Nix.
 
@@ -561,6 +567,10 @@ When `package-lock.json` is updated, the npm dependencies hash in `flake.nix` ne
 - Skips install scripts (including Electron's binary download) through its dependency fetching mechanism
 - Provides proper isolation and reproducibility
 - Uses `forceGitDeps` to handle optional git dependencies
+
+**Required Build Dependencies:**
+- `python313Packages.distutils`: Required for node-gyp to build native npm modules. Some dependencies in the dependency tree use node-gyp for compilation, which requires Python's distutils module.
+- `ELECTRON_SKIP_BINARY_DOWNLOAD = "1"`: Environment variable that prevents Electron's postinstall script from attempting to download prebuilt binaries from GitHub, which would fail in the Nix sandbox. Electron is provided by nixpkgs instead.
 
 All dependencies including Electron are provided by nixpkgs, so npm install scripts are unnecessary and would fail in the Nix sandbox anyway due to network isolation. The `forceGitDeps` flag is necessary because the register-scheme package is an optional git dependency with install scripts but no lockfile of its own.
 
